@@ -17,8 +17,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Xcodegen
-        run: brew install xcodegen
+      - name: Install Dependencies
+        run: |
+          brew install xcodegen
+          brew install ldid
 
       - name: Generate Xcode Project
         run: xcodegen generate
@@ -34,6 +36,22 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_ENTITLEMENTS="" \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Pseudo-Sign App (ldid)
+        run: |
+          cat <<EOF > entitlements.xml
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>application-identifier</key>
+              <string>com.futo.GrayjayiOS</string>
+              <key>get-task-allow</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+          ldid -Sentitlements.xml build/Build/Products/Release-iphoneos/GrayjayiOS.app
 
       - name: Package IPA
         run: |
