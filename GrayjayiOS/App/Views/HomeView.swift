@@ -141,7 +141,7 @@ struct VideoCard: View {
                         .foregroundColor(.white)
                         .lineLimit(2)
                     
-                    Text("\(video.author.name) • \(video.viewCount ?? 0) views")
+                    Text("\(video.author.name) - \(video.viewCount ?? 0) views")
                         .font(.system(size: 13))
                         .foregroundColor(Color(white: 0.6))
                         .lineLimit(1)
