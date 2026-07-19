@@ -1,6 +1,10 @@
 name: GrayjayiOS
 options:
   bundleIdPrefix: com.futo
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift.git
+    from: 6.20.0
 targets:
   GrayjayiOS:
     type: application
@@ -16,4 +20,5 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIBackgroundModes:
           - audio
-    dependencies: []
+    dependencies: 
+      - package: GRDB

@@ -35,9 +35,10 @@ struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
     
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 24) {
-                // Header
+        NavigationView {
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    // Header
                 HStack {
                     Text("Feed")
                         .font(.system(size: 32, weight: .black, design: .rounded))
@@ -69,16 +70,21 @@ struct HomeView: View {
                 } else {
                     LazyVStack(spacing: 32) {
                         ForEach(viewModel.videos) { video in
-                            VideoCard(video: video)
+                            NavigationLink(destination: VideoDetailsView(video: video, pluginId: GrayjayEngine.shared.activePluginId ?? "")) {
+                                VideoCard(video: video)
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                     .padding(.horizontal, 24)
                 }
+                }
             }
-        }
-        .background(Color.black.ignoresSafeArea())
-        .onAppear {
-            viewModel.fetchHome()
+            .background(Color.black.ignoresSafeArea())
+            .navigationBarHidden(true)
+            .onAppear {
+                viewModel.fetchHome()
+            }
         }
     }
 }
