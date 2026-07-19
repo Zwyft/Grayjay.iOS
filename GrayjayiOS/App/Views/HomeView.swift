@@ -90,10 +90,19 @@ struct VideoCard: View {
                     .cornerRadius(12)
                 
                 if let thumbUrl = video.thumbnails?.first, let url = URL(string: thumbUrl) {
-                    AsyncImage(url: url) { phase in
-                        if let image = phase.image {
-                            image.resizable().aspectRatio(16/9, contentMode: .fit).cornerRadius(12)
+                    if #available(iOS 15.0, *) {
+                        AsyncImage(url: url) { phase in
+                            if let image = phase.image {
+                                image.resizable().aspectRatio(16/9, contentMode: .fit).cornerRadius(12)
+                            }
                         }
+                    } else {
+                        // Fallback for iOS 14: Just a gray box (in a real app, use URLSession)
+                        Rectangle()
+                            .fill(Color(white: 0.2))
+                            .aspectRatio(16/9, contentMode: .fit)
+                            .cornerRadius(12)
+                            .overlay(Text("Thumb").foregroundColor(.gray))
                     }
                 }
             }
