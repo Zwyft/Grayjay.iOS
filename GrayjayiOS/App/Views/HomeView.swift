@@ -103,127 +103,166 @@ struct VideoCard: View {
     let video: VideoDescriptor
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Edge-to-Edge Thumbnail
+        HStack(alignment: .top, spacing: 10) {
+            // Left Side: Player Container (178x100)
             ZStack(alignment: .bottom) {
                 Rectangle()
                     .fill(Color(white: 0.1))
-                    .aspectRatio(16/9, contentMode: .fit)
-                    .frame(maxWidth: .infinity)
+                    .frame(width: 178, height: 100)
+                    .cornerRadius(4)
                 
                 if let thumbUrl = video.thumbnails?.first, let url = URL(string: thumbUrl) {
                     if #available(iOS 15.0, *) {
                         AsyncImage(url: url) { phase in
                             if let image = phase.image {
-                                image.resizable().aspectRatio(16/9, contentMode: .fit)
+                                image.resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 178, height: 100)
+                                    .clipped()
+                                    .cornerRadius(4)
                             }
                         }
                     } else {
                         Rectangle()
                             .fill(Color(white: 0.15))
-                            .aspectRatio(16/9, contentMode: .fit)
+                            .frame(width: 178, height: 100)
+                            .cornerRadius(4)
                     }
                 }
                 
-                // Red progress bar at the bottom (like time_bar in Grayjay)
+                // Red progress bar at the bottom
                 Rectangle()
                     .fill(Color.red)
-                    .frame(height: 2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.trailing, 150) // Simulate a partially watched video
+                    .frame(width: 178, height: 2)
+                    .padding(.trailing, 80) // Simulate a partially watched video
             }
+            .frame(width: 178, height: 100)
             
-            // Metadata (Mimicking list_video_preview.xml)
-            HStack(alignment: .top, spacing: 10) {
-                // Creator Thumbnail (32x32 on Android)
-                Circle()
-                    .fill(Color(white: 0.2))
-                    .frame(width: 32, height: 32)
-                    .overlay(
-                        Text(String(video.author.name.prefix(1)))
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                    )
-                    .padding(.top, 10)
+            // Right Side: Metadata & Buttons
+            VStack(alignment: .leading, spacing: 4) {
+                // Title (max 2 lines)
+                Text(video.name)
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .padding(.top, 2)
                 
-                // Title and Metadata
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(video.name)
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(.white)
-                        .lineLimit(2)
-                        .padding(.top, 7)
+                // Channel Avatar and Info
+                HStack(alignment: .center, spacing: 6) {
+                    // Small Channel Avatar (28x28)
+                    Circle()
+                        .fill(Color(white: 0.2))
+                        .frame(width: 28, height: 28)
+                        .overlay(
+                            Text(String(video.author.name.prefix(1)))
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        )
                     
-                    Text(video.author.name)
-                        .font(.system(size: 12, weight: .light))
-                        .foregroundColor(Color(red: 0.88, green: 0.88, blue: 0.88)) // #E0E0E0
-                        .lineLimit(1)
-                    
-                    Text("\(video.viewCount ?? 0) views")
-                        .font(.system(size: 12, weight: .light))
-                        .foregroundColor(Color(red: 0.88, green: 0.88, blue: 0.88)) // #E0E0E0
-                        .lineLimit(1)
-                        .padding(.bottom, 5)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(video.author.name)
+                            .font(.system(size: 10, weight: .light))
+                            .foregroundColor(Color(red: 0.88, green: 0.88, blue: 0.88))
+                            .lineLimit(1)
+                        
+                        Text("\(video.viewCount ?? 0) views")
+                            .font(.system(size: 10, weight: .light))
+                            .foregroundColor(Color(red: 0.88, green: 0.88, blue: 0.88))
+                            .lineLimit(1)
+                    }
                 }
                 
-                Spacer()
+                Spacer(minLength: 0)
                 
-                // Quick Action Buttons
-                HStack(spacing: 8) {
+                // Action Buttons pinned to the bottom
+                HStack(spacing: 6) {
                     Button(action: {}) {
-                        Image(systemName: "clock")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white)
-                            .frame(width: 30, height: 30)
-                            .background(Color(white: 0.15))
-                            .cornerRadius(4)
+                        HStack(spacing: 4) {
+                            Image(systemName: "gearshape")
+                                .font(.system(size: 12))
+                            Text("Options")
+                                .font(.system(size: 11, weight: .light))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 4)
+                        .background(Color(white: 0.15))
+                        .cornerRadius(4)
                     }
                     
                     Button(action: {}) {
                         Image(systemName: "list.bullet")
-                            .font(.system(size: 14))
+                            .font(.system(size: 12))
                             .foregroundColor(.white)
-                            .frame(width: 30, height: 30)
+                            .frame(width: 26, height: 22)
+                            .background(Color(white: 0.15))
+                            .cornerRadius(4)
+                    }
+                    
+                    Button(action: {}) {
+                        Image(systemName: "clock")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white)
+                            .frame(width: 26, height: 22)
                             .background(Color(white: 0.15))
                             .cornerRadius(4)
                     }
                 }
-                .padding(.top, 10)
-                .padding(.trailing, 10)
+                .padding(.bottom, 4)
             }
-            .padding(.leading, 10)
+            .frame(height: 100) // Match thumbnail height
+            
+            Spacer(minLength: 0)
         }
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
 struct VideoCardPlaceholder: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        HStack(alignment: .top, spacing: 10) {
+            // Left Side: Player Container
             Rectangle()
                 .fill(Color(white: 0.1))
-                .aspectRatio(16/9, contentMode: .fit)
-                .frame(maxWidth: .infinity)
+                .frame(width: 178, height: 100)
+                .cornerRadius(4)
             
-            HStack(alignment: .top, spacing: 10) {
-                Circle()
+            // Right Side: Metadata
+            VStack(alignment: .leading, spacing: 4) {
+                RoundedRectangle(cornerRadius: 4)
                     .fill(Color(white: 0.15))
-                    .frame(width: 32, height: 32)
-                    .padding(.top, 10)
+                    .frame(height: 14)
+                    .padding(.top, 4)
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    RoundedRectangle(cornerRadius: 4)
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color(white: 0.15))
+                    .frame(width: 100, height: 14)
+                
+                HStack(alignment: .center, spacing: 6) {
+                    Circle()
                         .fill(Color(white: 0.15))
-                        .frame(width: 180, height: 14)
-                        .padding(.top, 10)
+                        .frame(width: 28, height: 28)
                     
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color(white: 0.1))
-                        .frame(width: 120, height: 12)
+                    VStack(alignment: .leading, spacing: 2) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color(white: 0.1))
+                            .frame(width: 80, height: 10)
+                        
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color(white: 0.1))
+                            .frame(width: 60, height: 10)
+                    }
                 }
+                .padding(.top, 4)
                 
-                Spacer()
+                Spacer(minLength: 0)
             }
-            .padding(.leading, 10)
+            .frame(height: 100)
+            
+            Spacer(minLength: 0)
         }
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
