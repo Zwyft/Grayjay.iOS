@@ -81,7 +81,9 @@ struct VideoPlayerView: View {
         let newPlayer = AVPlayer(url: videoURL)
         
         // Optimize for background playback
-        newPlayer.audiovisualBackgroundPlaybackPolicy = .continuesIfPossible
+        if #available(iOS 15.0, *) {
+            newPlayer.audiovisualBackgroundPlaybackPolicy = .continuesIfPossible
+        }
         
         self.player = newPlayer
         self.player?.play()
