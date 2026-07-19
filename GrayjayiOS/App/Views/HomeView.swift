@@ -69,7 +69,7 @@ struct HomeView: View {
                     HStack {
                         Spacer()
                         
-                        Button(action: {}) {
+                        NavigationLink(destination: SearchView()) {
                             Image(systemName: "magnifyingglass")
                                 .font(.system(size: 20))
                                 .foregroundColor(.white)
