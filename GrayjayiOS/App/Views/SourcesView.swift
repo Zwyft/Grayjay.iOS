@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SourcesView: View {
     @StateObject private var pluginManager = PluginManager.shared
+    @State private var activeAuthPlugin: PluginConfig?
     
     var body: some View {
         NavigationView {
@@ -38,7 +39,9 @@ struct SourcesView: View {
                         } else {
                             VStack(spacing: 16) {
                                 ForEach(pluginManager.installedPlugins) { plugin in
-                                    InstalledSourceRow(plugin: plugin)
+                                    InstalledSourceRow(plugin: plugin, onLoginTap: {
+                                        activeAuthPlugin = plugin
+                                    })
                                 }
                             }
                             .padding(.horizontal)
@@ -54,6 +57,12 @@ struct SourcesView: View {
                         .font(.system(size: 24, weight: .black, design: .rounded))
                         .foregroundColor(.white)
                 }
+            }
+            .sheet(item: $activeAuthPlugin) { plugin in
+                AuthenticationSheet(plugin: plugin, isPresented: Binding(
+                    get: { activeAuthPlugin != nil },
+                    set: { if !$0 { activeAuthPlugin = nil } }
+                ))
             }
         }
     }
@@ -112,6 +121,7 @@ struct SourceRow: View {
 
 struct InstalledSourceRow: View {
     let plugin: PluginConfig
+    var onLoginTap: () -> Void
     
     var body: some View {
         HStack(spacing: 16) {
@@ -124,14 +134,34 @@ struct InstalledSourceRow: View {
                         .foregroundColor(.white)
                 )
             
-            Text(plugin.name)
-                .font(.headline)
-                .foregroundColor(.white)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(plugin.name)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                if plugin.savedAuth != nil {
+                    Text("Logged In")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
+            }
             
             Spacer()
             
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
+            if plugin.authConfig != nil && plugin.savedAuth == nil {
+                Button(action: onLoginTap) {
+                    Text("Login")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.black)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.white)
+                        .cornerRadius(20)
+                }
+            } else {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+            }
         }
         .padding()
         .background(Color(white: 0.05))

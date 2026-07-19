@@ -9,7 +9,7 @@ import JavaScriptCore
 
 @objc class PlatformBridge: NSObject, PlatformBridgeJSExport {
     func httpGet(_ url: String, _ headers: [String: String]) -> String {
-        return NetworkManager.shared.executeSyncGet(url: url, headers: headers)
+        return NetworkManager.shared.executeSyncGet(url: url, headers: headers, pluginId: GrayjayEngine.shared.activePluginId)
     }
     
     func log(_ message: String) {
@@ -20,6 +20,7 @@ import JavaScriptCore
 class GrayjayEngine {
     static let shared = GrayjayEngine()
     private var jsContext: JSContext!
+    var activePluginId: String?
     
     init() {
         setupContext()
@@ -49,7 +50,8 @@ class GrayjayEngine {
     }
     
     /// Loads a Grayjay plugin script into the engine
-    func loadPlugin(script: String) {
+    func loadPlugin(script: String, pluginId: String) {
+        self.activePluginId = pluginId
         _ = jsContext.evaluateScript(script)
     }
     
