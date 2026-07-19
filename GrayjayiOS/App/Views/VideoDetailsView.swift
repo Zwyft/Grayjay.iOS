@@ -41,7 +41,7 @@ struct VideoDetailsView: View {
                             .foregroundColor(.white)
                             .lineLimit(2)
                         
-                        Text("\(video.viewCount ?? 0) views • \(video.published ?? "Recently")")
+                        Text("\(video.viewCount ?? 0) views • Recently")
                             .font(.system(size: 14))
                             .foregroundColor(Color(white: 0.6))
                     }
