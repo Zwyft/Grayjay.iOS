@@ -15,27 +15,36 @@ struct PluginConfig: Codable, Identifiable {
     }
 }
 
-class PluginManager {
+class PluginManager: ObservableObject {
     static let shared = PluginManager()
     
     @Published var installedPlugins: [PluginConfig] = []
     
-    func installPlugin(from url: URL) {
-        // In a real app, this would download the JSON config, parse it, and then download the JS script.
-        // For now, we simulate a successful install.
-        let mockPlugin = PluginConfig(
-            id: "com.example.youtube",
-            name: "YouTube",
-            description: "Mock YouTube Plugin",
-            version: 1.0,
-            author: "FUTO",
-            scriptUrl: "https://example.com/yt.js"
-        )
-        
-        installedPlugins.append(mockPlugin)
-        
-        // Let the engine know
-        let mockScript = "function getHome() { return [{title: 'Mock Video', id: '123'}]; }"
-        GrayjayEngine.shared.loadPlugin(script: mockScript)
+    // Known sources registry (similar to Android app's default list)
+    @Published var availableSources: [PluginConfig] = [
+        PluginConfig(id: "com.futo.youtube", name: "YouTube", description: "Official YouTube Plugin", version: 1.0, author: "FUTO", scriptUrl: "https://plugins.grayjay.app/youtube.js"),
+        PluginConfig(id: "com.futo.rumble", name: "Rumble", description: "Official Rumble Plugin", version: 1.0, author: "FUTO", scriptUrl: "https://plugins.grayjay.app/rumble.js"),
+        PluginConfig(id: "com.futo.twitch", name: "Twitch", description: "Official Twitch Plugin", version: 1.0, author: "FUTO", scriptUrl: "https://plugins.grayjay.app/twitch.js")
+    ]
+    
+    func installPlugin(source: PluginConfig) {
+        // In a real implementation, this would HTTP GET the scriptUrl, validate it, and save it to SQLite.
+        // For now, we simulate installation and add it to our active array.
+        if !installedPlugins.contains(where: { $0.id == source.id }) {
+            installedPlugins.append(source)
+            
+            // Mock JS injection for the engine to prove binding works
+            let mockScript = """
+            function getHome() { 
+                return JSON.stringify({
+                    hasMore: false, 
+                    results: [
+                        {id: '1', name: 'Mock \(source.name) Video', author: '\(source.author)', url: 'mock://video', thumbnails: ['https://picsum.photos/400/225']}
+                    ]
+                });
+            }
+            """
+            GrayjayEngine.shared.loadPlugin(script: mockScript)
+        }
     }
 }

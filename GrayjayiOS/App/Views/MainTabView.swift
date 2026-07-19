@@ -27,7 +27,7 @@ struct MainTabView: View {
                 case .downloads:
                     Color.clear
                 case .settings:
-                    Color.clear
+                    SourcesView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

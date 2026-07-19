@@ -1,6 +1,33 @@
 import SwiftUI
 
+class HomeViewModel: ObservableObject {
+    @Published var videos: [VideoDescriptor] = []
+    
+    init() {
+        // Subscribe to engine notifications or polling (simplified for Phase 1)
+        NotificationCenter.default.addObserver(self, selector: #selector(fetchHome), name: NSNotification.Name("PluginInstalled"), object: nil)
+    }
+    
+    @objc func fetchHome() {
+        // In reality, this would evaluate a JS function across all installed plugins and merge.
+        if let jsValue = GrayjayEngine.shared.executeFunction(name: "getHome", args: []),
+           let jsonString = jsValue.toString(),
+           let data = jsonString.data(using: .utf8) {
+            do {
+                let paged = try JSONDecoder().decode(PagedResult<VideoDescriptor>.self, from: data)
+                DispatchQueue.main.async {
+                    self.videos = paged.results
+                }
+            } catch {
+                print("Failed to decode video descriptor: \(error)")
+            }
+        }
+    }
+}
+
 struct HomeView: View {
+    @StateObject private var viewModel = HomeViewModel()
+    
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 24) {
@@ -12,8 +39,10 @@ struct HomeView: View {
                     
                     Spacer()
                     
-                    Button(action: {}) {
-                        Image(systemName: "magnifyingglass")
+                    Button(action: {
+                        viewModel.fetchHome()
+                    }) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
                             .font(.system(size: 20, weight: .bold))
                             .foregroundColor(.white)
                             .padding(12)
@@ -23,16 +52,79 @@ struct HomeView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 60)
                 
-                // Content Feed Placeholder
-                VStack(spacing: 32) {
-                    ForEach(0..<5) { index in
-                        VideoCardPlaceholder()
+                // Content Feed
+                if viewModel.videos.isEmpty {
+                    VStack(spacing: 32) {
+                        ForEach(0..<3) { index in
+                            VideoCardPlaceholder()
+                        }
                     }
+                    .padding(.horizontal, 24)
+                } else {
+                    LazyVStack(spacing: 32) {
+                        ForEach(viewModel.videos) { video in
+                            VideoCard(video: video)
+                        }
+                    }
+                    .padding(.horizontal, 24)
                 }
-                .padding(.horizontal, 24)
             }
         }
         .background(Color.black.ignoresSafeArea())
+        .onAppear {
+            viewModel.fetchHome()
+        }
+    }
+}
+
+struct VideoCard: View {
+    let video: VideoDescriptor
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Thumbnail
+            ZStack {
+                Rectangle()
+                    .fill(Color(white: 0.1))
+                    .aspectRatio(16/9, contentMode: .fit)
+                    .cornerRadius(12)
+                
+                if let thumbUrl = video.thumbnails?.first, let url = URL(string: thumbUrl) {
+                    AsyncImage(url: url) { phase in
+                        if let image = phase.image {
+                            image.resizable().aspectRatio(16/9, contentMode: .fit).cornerRadius(12)
+                        }
+                    }
+                }
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.05), lineWidth: 1)
+            )
+            
+            // Metadata
+            HStack(alignment: .top, spacing: 12) {
+                Circle()
+                    .fill(Color.blue.opacity(0.5))
+                    .frame(width: 40, height: 40)
+                    .overlay(
+                        Text(String(video.author.prefix(1)))
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                    )
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(video.name)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                    
+                    Text(video.author)
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
+            }
+        }
     }
 }
 
