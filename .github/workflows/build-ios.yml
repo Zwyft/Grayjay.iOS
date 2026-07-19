@@ -64,3 +64,15 @@ jobs:
         with:
           name: Grayjay-iOS-IPA
           path: Grayjay-iOS.ipa
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/ios-port'
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Grayjay iOS Build ${{ github.run_number }}
+          files: Grayjay-iOS.ipa
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
