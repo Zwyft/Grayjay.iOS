@@ -98,4 +98,39 @@ class GrayjayEngine {
         }
         return function.call(withArguments: args)
     }
+    
+    /// Fetches Video Details (Resolves JS Promise)
+    func fetchVideoDetails(url: String, completion: @escaping (String?) -> Void) {
+        // Create a unique callback function in JS to handle this promise
+        let callbackName = "swiftCallback_\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
+        
+        let callback: @convention(block) (JSValue) -> Void = { result in
+            DispatchQueue.main.async {
+                if result.isString {
+                    completion(result.toString())
+                } else {
+                    let stringify = self.jsContext.objectForKeyedSubscript("JSON").objectForKeyedSubscript("stringify")!
+                    let jsonString = stringify.call(withArguments: [result])?.toString()
+                    completion(jsonString)
+                }
+            }
+        }
+        
+        jsContext.setObject(callback, forKeyedSubscript: callbackName as NSString)
+        
+        // Execute the Promise resolution in JS
+        let script = """
+        if (typeof source !== 'undefined' && source.getContentDetails) {
+            source.getContentDetails("\(url)").then(res => {
+                \(callbackName)(res);
+            }).catch(err => {
+                print("getContentDetails error: " + err);
+                \(callbackName)(null);
+            });
+        } else {
+            \(callbackName)(null);
+        }
+        """
+        _ = jsContext.evaluateScript(script)
+    }
 }

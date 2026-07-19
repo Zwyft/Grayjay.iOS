@@ -1,10 +1,13 @@
 import SwiftUI
+import AVKit
 
 struct VideoDetailsView: View {
     let video: VideoDescriptor
     let pluginId: String
     
     @State private var isSubscribed: Bool = false
+    @State private var player: AVPlayer?
+    @State private var isFetchingStream: Bool = true
     
     var body: some View {
         ScrollView {
@@ -12,23 +15,36 @@ struct VideoDetailsView: View {
                 // True Edge-to-Edge Player
                 ZStack {
                     Color.black
-                    if let thumbnailUrl = video.thumbnails?.first {
-                        if #available(iOS 15.0, *) {
-                            AsyncImage(url: URL(string: thumbnailUrl)) { image in
-                                image.resizable().aspectRatio(contentMode: .fit)
-                            } placeholder: {
-                                ProgressView()
+                    if let player = player {
+                        VideoPlayer(player: player)
+                            .onAppear {
+                                player.play()
                             }
+                    } else {
+                        if let thumbnailUrl = video.thumbnails?.first {
+                            if #available(iOS 15.0, *) {
+                                AsyncImage(url: URL(string: thumbnailUrl)) { image in
+                                    image.resizable().aspectRatio(contentMode: .fit)
+                                } placeholder: {
+                                    ProgressView()
+                                }
+                            } else {
+                                Text("Player Loading...")
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        
+                        if isFetchingStream {
+                            ProgressView()
+                                .scaleEffect(1.5, anchor: .center)
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         } else {
-                            Text("Player Loading...")
-                                .foregroundColor(.white)
+                            Image(systemName: "play.circle.fill")
+                                .resizable()
+                                .frame(width: 60, height: 60)
+                                .foregroundColor(.white.opacity(0.8))
                         }
                     }
-                    
-                    Image(systemName: "play.circle.fill")
-                        .resizable()
-                        .frame(width: 60, height: 60)
-                        .foregroundColor(.white.opacity(0.8))
                 }
                 .frame(width: UIScreen.main.bounds.width)
                 .aspectRatio(16/9, contentMode: .fit)
@@ -104,6 +120,7 @@ struct VideoDetailsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             checkSubscription()
+            fetchStream()
             
             // Add to history
             DatabaseManager.shared.addToHistory(
@@ -113,6 +130,43 @@ struct VideoDetailsView: View {
                 authorName: video.author.name,
                 thumbnail: video.thumbnails?.first
             )
+        }
+        .onDisappear {
+            player?.pause()
+        }
+    }
+    
+    private func fetchStream() {
+        GrayjayEngine.shared.fetchVideoDetails(url: video.url) { jsonString in
+            guard let jsonString = jsonString, let data = jsonString.data(using: .utf8) else {
+                isFetchingStream = false
+                return
+            }
+            
+            do {
+                let details = try JSONDecoder().decode(PlatformVideoDetails.self, from: data)
+                
+                // Find a suitable stream URL (Prefer HLS, then MP4)
+                if let sources = details.video?.videoSources {
+                    let hlsSource = sources.first { $0.container == "application/x-mpegURL" || $0.url.contains(".m3u8") }
+                    let mp4Source = sources.first { $0.container == "video/mp4" || $0.url.contains(".mp4") }
+                    
+                    if let targetSource = hlsSource ?? mp4Source ?? sources.first,
+                       let url = URL(string: targetSource.url) {
+                        DispatchQueue.main.async {
+                            self.player = AVPlayer(url: url)
+                            self.isFetchingStream = false
+                        }
+                    } else {
+                        self.isFetchingStream = false
+                    }
+                } else {
+                    self.isFetchingStream = false
+                }
+            } catch {
+                print("Failed to parse video details: \(error)")
+                self.isFetchingStream = false
+            }
         }
     }
     
