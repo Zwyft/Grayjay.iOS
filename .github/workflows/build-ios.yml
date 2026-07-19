@@ -1,0 +1,48 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches:
+      - ios-port
+  pull_request:
+    branches:
+      - ios-port
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Xcodegen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Build App (Unsigned for Jailbreak)
+        run: |
+          xcodebuild -project GrayjayiOS.xcodeproj \
+            -scheme GrayjayiOS \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/GrayjayiOS.app Payload/
+          zip -r Grayjay-iOS.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Grayjay-iOS-IPA
+          path: Grayjay-iOS.ipa

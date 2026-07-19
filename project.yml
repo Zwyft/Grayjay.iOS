@@ -1,0 +1,18 @@
+name: GrayjayiOS
+options:
+  bundleIdPrefix: com.futo
+targets:
+  GrayjayiOS:
+    type: application
+    platform: iOS
+    deploymentTarget: "14.4"
+    sources:
+      - path: GrayjayiOS/App
+      - path: GrayjayiOS/Core
+    settings:
+      base:
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIBackgroundModes:
+          - audio
+    dependencies: []
