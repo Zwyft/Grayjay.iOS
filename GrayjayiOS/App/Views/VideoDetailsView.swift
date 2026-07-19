@@ -9,7 +9,7 @@ struct VideoDetailsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Video Player Placeholder / Integration
+                // Edge-to-Edge Player Placeholder
                 ZStack {
                     Color.black
                     if let thumbnailUrl = video.thumbnails?.first {
@@ -33,69 +33,78 @@ struct VideoDetailsView: View {
                 }
                 .frame(height: 220)
                 
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(video.name)
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-                    
-                    HStack {
-                        if let views = video.viewCount {
-                            Text("\(views) views")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
+                VStack(alignment: .leading, spacing: 20) {
+                    // Title and Views
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(video.name)
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white)
+                            .lineLimit(2)
                         
-                        Spacer()
+                        Text("\(video.viewCount ?? 0) views • \(video.published ?? "Recently")")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(white: 0.6))
                     }
+                    .padding(.top, 16)
                     
-                    Divider()
+                    Divider().background(Color(white: 0.2))
                     
                     // Author / Subscribe Row
-                    HStack(spacing: 12) {
+                    HStack(spacing: 16) {
                         Circle()
-                            .fill(Color.blue.opacity(0.2))
-                            .frame(width: 48, height: 48)
+                            .fill(Color(white: 0.2))
+                            .frame(width: 44, height: 44)
                             .overlay(
                                 Text(String(video.author.name.prefix(1)))
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.blue)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white)
                             )
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text(video.author.name)
-                                .font(.headline)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
                             
                             Text("Creator")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .font(.system(size: 13))
+                                .foregroundColor(Color(white: 0.6))
                         }
                         
                         Spacer()
                         
                         Button(action: toggleSubscription) {
                             Text(isSubscribed ? "Subscribed" : "Subscribe")
-                                .fontWeight(.semibold)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(isSubscribed ? Color.gray.opacity(0.2) : Color.red)
-                                .foregroundColor(isSubscribed ? .primary : .white)
-                                .cornerRadius(20)
+                                .font(.system(size: 15, weight: .bold))
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .background(isSubscribed ? Color(white: 0.2) : Color.red)
+                                .foregroundColor(isSubscribed ? .white : .white)
+                                .cornerRadius(24)
                         }
                     }
                     
-                    Divider()
+                    Divider().background(Color(white: 0.2))
                     
-                    if let description = video.description {
-                        Text(description)
-                            .font(.body)
-                            .foregroundColor(.primary)
+                    // Description
+                    if let description = video.description, !description.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Description")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                            
+                            Text(description)
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(white: 0.8))
+                        }
+                        .padding()
+                        .background(Color(white: 0.1))
+                        .cornerRadius(12)
                     }
                 }
-                .padding()
+                .padding(.horizontal, 16)
             }
         }
+        .background(Color.black.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             checkSubscription()

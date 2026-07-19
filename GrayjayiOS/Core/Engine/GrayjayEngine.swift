@@ -73,9 +73,21 @@ class GrayjayEngine {
     }
     
     /// Loads a Grayjay plugin script into the engine
-    func loadPlugin(script: String, pluginId: String) {
+    func loadPlugin(script: String, pluginId: String, settings: [String: Any]? = nil) {
         self.activePluginId = pluginId
         _ = jsContext.evaluateScript(script)
+        
+        let defaultSettings: [String: Any] = [
+            "authDetails": true,
+            "youtubeActivity": true,
+            "authChannels": true,
+            "allowLoginFallback": true
+        ]
+        
+        let finalSettings = settings ?? defaultSettings
+        if let jsonString = try? String(data: JSONSerialization.data(withJSONObject: finalSettings), encoding: .utf8) {
+            _ = jsContext.evaluateScript("if(typeof source !== 'undefined' && source.setSettings) { source.setSettings(\(jsonString)); }")
+        }
     }
     
     /// Executes a specific function from the plugin
