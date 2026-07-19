@@ -9,17 +9,23 @@ class HomeViewModel: ObservableObject {
     }
     
     @objc func fetchHome() {
-        // In reality, this would evaluate a JS function across all installed plugins and merge.
+        // Evaluate getHome across installed plugins (simplified)
         if let jsValue = GrayjayEngine.shared.executeFunction(name: "getHome", args: []),
-           let jsonString = jsValue.toString(),
+           let context = jsValue.context,
+           let stringify = context.objectForKeyedSubscript("JSON")?.objectForKeyedSubscript("stringify"),
+           let jsonJsValue = stringify.call(withArguments: [jsValue]),
+           let jsonString = jsonJsValue.toString(),
            let data = jsonString.data(using: .utf8) {
             do {
                 let paged = try JSONDecoder().decode(PagedResult<VideoDescriptor>.self, from: data)
                 DispatchQueue.main.async {
-                    self.videos = paged.results
+                    if let res = paged.results {
+                        self.videos = res
+                    }
                 }
             } catch {
                 print("Failed to decode video descriptor: \(error)")
+                print("JSON Dump: \(String(data: data, encoding: .utf8) ?? "")")
             }
         }
     }
@@ -117,7 +123,7 @@ struct VideoCard: View {
                     .fill(Color.blue.opacity(0.5))
                     .frame(width: 40, height: 40)
                     .overlay(
-                        Text(String(video.author.prefix(1)))
+                        Text(String(video.author.name.prefix(1)))
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                     )
@@ -128,7 +134,7 @@ struct VideoCard: View {
                         .foregroundColor(.white)
                         .lineLimit(2)
                     
-                    Text(video.author)
+                    Text(video.author.name)
                         .font(.subheadline)
                         .foregroundColor(.gray)
                 }

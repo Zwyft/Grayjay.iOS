@@ -43,7 +43,7 @@ class PluginManager: ObservableObject {
     // Known sources registry (similar to Android app's default list)
     @Published var availableSources: [PluginConfig] = [
         PluginConfig(
-            id: "com.futo.youtube", name: "YouTube", description: "Official YouTube Plugin", version: 1.0, author: "FUTO", scriptUrl: "https://plugins.grayjay.app/youtube.js",
+            id: "com.futo.youtube", name: "YouTube", description: "Official YouTube Plugin", version: 1.0, author: "FUTO", scriptUrl: "https://gitlab.futo.org/videostreaming/plugins/youtube/-/raw/master/YoutubeScript.js",
             authConfig: PluginAuthConfig(loginUrl: "https://accounts.google.com/ServiceLogin?service=youtube", completionUrl: nil, cookiesToFind: ["SID", "HSID", "SSID"], headersToFind: nil),
             savedAuth: nil
         ),
@@ -59,23 +59,22 @@ class PluginManager: ObservableObject {
     ]
     
     func installPlugin(source: PluginConfig) {
-        // In a real implementation, this would HTTP GET the scriptUrl, validate it, and save it to SQLite.
-        // For now, we simulate installation and add it to our active array.
         if !installedPlugins.contains(where: { $0.id == source.id }) {
             installedPlugins.append(source)
             
-            // Mock JS injection for the engine to prove binding works
-            let mockScript = """
-            function getHome() { 
-                return JSON.stringify({
-                    hasMore: false, 
-                    results: [
-                        {id: '1', name: 'Mock \(source.name) Video', author: '\(source.author)', url: 'mock://video', thumbnails: ['https://picsum.photos/400/225']}
-                    ]
-                });
-            }
-            """
-            GrayjayEngine.shared.loadPlugin(script: mockScript, pluginId: source.id)
+            // Download the actual JavaScript plugin script
+            guard let url = URL(string: source.scriptUrl) else { return }
+            
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                if let data = data, let script = String(data: data, encoding: .utf8) {
+                    DispatchQueue.main.async {
+                        GrayjayEngine.shared.loadPlugin(script: script, pluginId: source.id)
+                        NotificationCenter.default.post(name: NSNotification.Name("PluginInstalled"), object: nil)
+                    }
+                } else {
+                    print("Failed to download plugin script: \(error?.localizedDescription ?? "Unknown error")")
+                }
+            }.resume()
         }
     }
     

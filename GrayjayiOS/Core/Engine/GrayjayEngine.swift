@@ -5,6 +5,7 @@ import JavaScriptCore
 @objc protocol PlatformBridgeJSExport: JSExport {
     func httpGet(_ url: String, _ headers: [String: String]) -> String
     func log(_ message: String)
+    func isLoggedIn() -> Bool
 }
 
 @objc class PlatformBridge: NSObject, PlatformBridgeJSExport {
@@ -14,6 +15,11 @@ import JavaScriptCore
     
     func log(_ message: String) {
         print("[Plugin Log]: \(message)")
+    }
+    
+    func isLoggedIn() -> Bool {
+        guard let activeId = GrayjayEngine.shared.activePluginId else { return false }
+        return PluginManager.shared.installedPlugins.first(where: { $0.id == activeId })?.savedAuth != nil
     }
 }
 
@@ -46,7 +52,24 @@ class GrayjayEngine {
         }
         jsContext.setObject(consoleLog, forKeyedSubscript: "print" as NSString)
         
-        _ = jsContext.evaluateScript("var console = { log: print };")
+        // Timeout Polyfills (required by bundled JSDOM)
+        let setTimeout: @convention(block) (JSValue, Double) -> Void = { callback, delay in
+            DispatchQueue.global().asyncAfter(deadline: .now() + (delay / 1000.0)) {
+                callback.call(withArguments: [])
+            }
+        }
+        jsContext.setObject(setTimeout, forKeyedSubscript: "setTimeout" as NSString)
+        
+        let clearTimeout: @convention(block) (JSValue) -> Void = { _ in
+            // Basic mock, true cancellation requires tracking IDs
+        }
+        jsContext.setObject(clearTimeout, forKeyedSubscript: "clearTimeout" as NSString)
+        
+        _ = jsContext.evaluateScript("""
+            var console = { log: print, error: print, warn: print, info: print };
+            var window = this;
+            var global = this;
+        """)
     }
     
     /// Loads a Grayjay plugin script into the engine
