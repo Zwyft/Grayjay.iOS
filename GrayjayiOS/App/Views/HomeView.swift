@@ -109,6 +109,7 @@ struct VideoCard: View {
                 Rectangle()
                     .fill(Color(white: 0.1))
                     .aspectRatio(16/9, contentMode: .fit)
+                    .frame(maxWidth: .infinity)
                 
                 if let thumbUrl = video.thumbnails?.first, let url = URL(string: thumbUrl) {
                     if #available(iOS 15.0, *) {
@@ -201,6 +202,7 @@ struct VideoCardPlaceholder: View {
             Rectangle()
                 .fill(Color(white: 0.1))
                 .aspectRatio(16/9, contentMode: .fit)
+                .frame(maxWidth: .infinity)
             
             HStack(alignment: .top, spacing: 10) {
                 Circle()
