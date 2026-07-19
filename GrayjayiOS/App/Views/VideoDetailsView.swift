@@ -9,7 +9,7 @@ struct VideoDetailsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Edge-to-Edge Player Placeholder
+                // True Edge-to-Edge Player
                 ZStack {
                     Color.black
                     if let thumbnailUrl = video.thumbnails?.first {
@@ -20,7 +20,6 @@ struct VideoDetailsView: View {
                                 ProgressView()
                             }
                         } else {
-                            // iOS 14 fallback
                             Text("Player Loading...")
                                 .foregroundColor(.white)
                         }
@@ -31,19 +30,20 @@ struct VideoDetailsView: View {
                         .frame(width: 60, height: 60)
                         .foregroundColor(.white.opacity(0.8))
                 }
-                .frame(height: 220)
+                .frame(width: UIScreen.main.bounds.width)
+                .aspectRatio(16/9, contentMode: .fit)
                 
                 VStack(alignment: .leading, spacing: 20) {
                     // Title and Views
                     VStack(alignment: .leading, spacing: 8) {
                         Text(video.name)
-                            .font(.system(size: 20, weight: .bold))
+                            .font(.system(size: 18, weight: .regular))
                             .foregroundColor(.white)
                             .lineLimit(2)
                         
                         Text("\(video.viewCount ?? 0) views • Recently")
-                            .font(.system(size: 14))
-                            .foregroundColor(Color(white: 0.6))
+                            .font(.system(size: 12, weight: .light))
+                            .foregroundColor(Color(red: 0.88, green: 0.88, blue: 0.88))
                     }
                     .padding(.top, 16)
                     
@@ -53,33 +53,33 @@ struct VideoDetailsView: View {
                     HStack(spacing: 16) {
                         Circle()
                             .fill(Color(white: 0.2))
-                            .frame(width: 44, height: 44)
+                            .frame(width: 40, height: 40)
                             .overlay(
                                 Text(String(video.author.name.prefix(1)))
-                                    .font(.system(size: 18, weight: .bold))
+                                    .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(.white)
                             )
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text(video.author.name)
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.white)
                             
                             Text("Creator")
-                                .font(.system(size: 13))
-                                .foregroundColor(Color(white: 0.6))
+                                .font(.system(size: 12, weight: .light))
+                                .foregroundColor(Color(red: 0.88, green: 0.88, blue: 0.88))
                         }
                         
                         Spacer()
                         
                         Button(action: toggleSubscription) {
                             Text(isSubscribed ? "Subscribed" : "Subscribe")
-                                .font(.system(size: 15, weight: .bold))
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 10)
-                                .background(isSubscribed ? Color(white: 0.2) : Color.red)
+                                .font(.system(size: 14, weight: .medium))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(isSubscribed ? Color(white: 0.15) : Color.red)
                                 .foregroundColor(isSubscribed ? .white : .white)
-                                .cornerRadius(24)
+                                .cornerRadius(4)
                         }
                     }
                     
@@ -88,17 +88,13 @@ struct VideoDetailsView: View {
                     // Description
                     if let description = video.description, !description.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Description")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white)
-                            
                             Text(description)
-                                .font(.system(size: 14))
-                                .foregroundColor(Color(white: 0.8))
+                                .font(.system(size: 12, weight: .regular))
+                                .foregroundColor(.white)
                         }
-                        .padding()
+                        .padding(12)
                         .background(Color(white: 0.1))
-                        .cornerRadius(12)
+                        .cornerRadius(8)
                     }
                 }
                 .padding(.horizontal, 16)

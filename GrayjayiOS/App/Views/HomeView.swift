@@ -64,27 +64,29 @@ struct HomeView: View {
                     }
                 }
                 
-                // Translucent Glassmorphism Header
+                // Minimal Transparent Top Bar (Mimicking Grayjay Android)
                 VStack(spacing: 0) {
                     HStack {
-                        Text("Grayjay")
-                            .font(.system(size: 28, weight: .heavy, design: .default))
-                            .foregroundColor(.white)
-                        
                         Spacer()
+                        
+                        Button(action: {}) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 20))
+                                .foregroundColor(.white)
+                                .padding(8)
+                        }
                         
                         Button(action: {
                             viewModel.fetchHome()
                         }) {
                             Image(systemName: "arrow.triangle.2.circlepath")
-                                .font(.system(size: 18, weight: .bold))
+                                .font(.system(size: 20))
                                 .foregroundColor(.white)
-                                .padding(10)
-                                .background(Circle().fill(Color.white.opacity(0.15)))
+                                .padding(8)
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 8)
                     .padding(.top, UIApplication.shared.windows.first?.safeAreaInsets.top ?? 44)
                 }
                 .background(BlurView(style: .dark).ignoresSafeArea(edges: .top))
@@ -101,9 +103,9 @@ struct VideoCard: View {
     let video: VideoDescriptor
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
             // Edge-to-Edge Thumbnail
-            ZStack {
+            ZStack(alignment: .bottom) {
                 Rectangle()
                     .fill(Color(white: 0.1))
                     .aspectRatio(16/9, contentMode: .fit)
@@ -121,60 +123,105 @@ struct VideoCard: View {
                             .aspectRatio(16/9, contentMode: .fit)
                     }
                 }
+                
+                // Red progress bar at the bottom (like time_bar in Grayjay)
+                Rectangle()
+                    .fill(Color.red)
+                    .frame(height: 2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.trailing, 150) // Simulate a partially watched video
             }
             
-            // Metadata
-            HStack(alignment: .top, spacing: 12) {
-                // Author Avatar
+            // Metadata (Mimicking list_video_preview.xml)
+            HStack(alignment: .top, spacing: 10) {
+                // Creator Thumbnail (32x32 on Android)
                 Circle()
                     .fill(Color(white: 0.2))
-                    .frame(width: 40, height: 40)
+                    .frame(width: 32, height: 32)
                     .overlay(
                         Text(String(video.author.name.prefix(1)))
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white)
                     )
+                    .padding(.top, 10)
                 
-                VStack(alignment: .leading, spacing: 4) {
+                // Title and Metadata
+                VStack(alignment: .leading, spacing: 0) {
                     Text(video.name)
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 14, weight: .regular))
                         .foregroundColor(.white)
                         .lineLimit(2)
+                        .padding(.top, 7)
                     
-                    Text("\(video.author.name) - \(video.viewCount ?? 0) views")
-                        .font(.system(size: 13))
-                        .foregroundColor(Color(white: 0.6))
+                    Text(video.author.name)
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundColor(Color(red: 0.88, green: 0.88, blue: 0.88)) // #E0E0E0
                         .lineLimit(1)
+                    
+                    Text("\(video.viewCount ?? 0) views")
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundColor(Color(red: 0.88, green: 0.88, blue: 0.88)) // #E0E0E0
+                        .lineLimit(1)
+                        .padding(.bottom, 5)
                 }
+                
+                Spacer()
+                
+                // Quick Action Buttons
+                HStack(spacing: 8) {
+                    Button(action: {}) {
+                        Image(systemName: "clock")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white)
+                            .frame(width: 30, height: 30)
+                            .background(Color(white: 0.15))
+                            .cornerRadius(4)
+                    }
+                    
+                    Button(action: {}) {
+                        Image(systemName: "list.bullet")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white)
+                            .frame(width: 30, height: 30)
+                            .background(Color(white: 0.15))
+                            .cornerRadius(4)
+                    }
+                }
+                .padding(.top, 10)
+                .padding(.trailing, 10)
             }
-            .padding(.horizontal, 16)
+            .padding(.leading, 10)
         }
     }
 }
 
 struct VideoCardPlaceholder: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
             Rectangle()
                 .fill(Color(white: 0.1))
                 .aspectRatio(16/9, contentMode: .fit)
             
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
                 Circle()
                     .fill(Color(white: 0.15))
-                    .frame(width: 40, height: 40)
+                    .frame(width: 32, height: 32)
+                    .padding(.top, 10)
                 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color(white: 0.15))
-                        .frame(width: 200, height: 16)
+                        .frame(width: 180, height: 14)
+                        .padding(.top, 10)
                     
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color(white: 0.1))
-                        .frame(width: 140, height: 12)
+                        .frame(width: 120, height: 12)
                 }
+                
+                Spacer()
             }
-            .padding(.horizontal, 16)
+            .padding(.leading, 10)
         }
     }
 }
