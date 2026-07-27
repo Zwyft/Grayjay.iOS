@@ -97,8 +97,8 @@ struct AuthenticationView: UIViewRepresentable {
                 }
                 
                 // Also look for headers (less common)
-                var extractedHeaders: [String: String] = [:]
-                for headerName in authConfig.headersToFind {
+                let extractedHeaders: [String: String] = [:]
+                for _ in authConfig.headersToFind {
                     // We'd need JavaScript injection for headers — skip for now
                 }
                 
