@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SubsView: View {
+    @Binding var sidebarOpen: Bool
     @State private var subscriptions: [Subscription] = []
     
     var body: some View {
@@ -35,6 +36,17 @@ struct SubsView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
+                            sidebarOpen = true
+                        }
+                    }) {
+                        Image(systemName: "line.3.horizontal")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+                }
                 ToolbarItem(placement: .principal) {
                     Text("Subscriptions")
                         .font(.system(size: 24, weight: .black, design: .rounded))

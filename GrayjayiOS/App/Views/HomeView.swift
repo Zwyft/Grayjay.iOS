@@ -1,14 +1,20 @@
 import SwiftUI
+import Combine
 
 class HomeViewModel: ObservableObject {
     @Published var videos: [VideoDescriptor] = []
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
-        // Subscribe to engine notifications or polling (simplified for Phase 1)
-        NotificationCenter.default.addObserver(self, selector: #selector(fetchHome), name: NSNotification.Name("PluginInstalled"), object: nil)
+        // Subscribe to engine notifications using Combine to avoid @objc/#selector issues
+        NotificationCenter.default.publisher(for: NSNotification.Name("PluginInstalled"))
+            .sink { [weak self] _ in
+                self?.fetchHome()
+            }
+            .store(in: &cancellables)
     }
     
-    @objc func fetchHome() {
+    func fetchHome() {
         // Evaluate getHome across installed plugins (simplified)
         if let jsValue = GrayjayEngine.shared.executeFunction(name: "getHome", args: []),
            let context = jsValue.context,
@@ -32,70 +38,94 @@ class HomeViewModel: ObservableObject {
 }
 
 struct HomeView: View {
+    @Binding var sidebarOpen: Bool
+    @Binding var selectedSection: SidebarSection
     @StateObject private var viewModel = HomeViewModel()
     
     var body: some View {
-        NavigationView {
-            ZStack(alignment: .top) {
-                Color.black.ignoresSafeArea()
-                
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Spacer for fixed header
-                        Spacer().frame(height: 100)
-                        
-                        // Content Feed
-                        if viewModel.videos.isEmpty {
-                            VStack(spacing: 32) {
-                                ForEach(0..<3) { index in
-                                    VideoCardPlaceholder()
-                                }
-                            }
-                        } else {
-                            LazyVStack(spacing: 24) {
-                                ForEach(viewModel.videos) { video in
-                                    NavigationLink(destination: VideoDetailsView(video: video, pluginId: GrayjayEngine.shared.activePluginId ?? "")) {
-                                        VideoCard(video: video)
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+            
+            // Content Feed with Navigation
+            NavigationView {
+                ZStack(alignment: .top) {
+                    Color.black.ignoresSafeArea()
+                    
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 0) {
+                            // Spacer for fixed header
+                            Spacer().frame(height: 100)
+                            
+                            // Content Feed
+                            if viewModel.videos.isEmpty {
+                                VStack(spacing: 32) {
+                                    ForEach(0..<3) { index in
+                                        VideoCardPlaceholder()
                                     }
-                                    .buttonStyle(PlainButtonStyle())
+                                }
+                            } else {
+                                LazyVStack(spacing: 24) {
+                                    ForEach(viewModel.videos) { video in
+                                        NavigationLink(destination: VideoDetailsView(video: video, pluginId: GrayjayEngine.shared.activePluginId ?? "")) {
+                                            VideoCard(video: video)
+                                        }
+                                        .buttonStyle(PlainButtonStyle())
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                
-                // Minimal Transparent Top Bar (Mimicking Grayjay Android)
-                VStack(spacing: 0) {
-                    HStack {
-                        Spacer()
-                        
-                        NavigationLink(destination: SearchView()) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 20))
-                                .foregroundColor(.white)
-                                .padding(8)
+                    
+                    // Transparent Top Bar with Hamburger Menu
+                    VStack(spacing: 0) {
+                        HStack {
+                            // Hamburger Menu Button to open sidebar
+                            Button(action: {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
+                                    sidebarOpen = true
+                                }
+                            }) {
+                                Image(systemName: "line.3.horizontal")
+                                    .font(.system(size: 20, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                            }
+                            
+                            Spacer()
+                            
+                            // Navigation link to Search
+                            NavigationLink(destination: SearchView()) {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                            }
+                            
+                            Button(action: {
+                                viewModel.fetchHome()
+                            }) {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                            }
                         }
-                        
-                        Button(action: {
-                            viewModel.fetchHome()
-                        }) {
-                            Image(systemName: "arrow.triangle.2.circlepath")
-                                .font(.system(size: 20))
-                                .foregroundColor(.white)
-                                .padding(8)
-                        }
+                        .padding(.horizontal, 8)
+                        .padding(.bottom, 8)
+                        .padding(.top, safeAreaTop)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.bottom, 8)
-                    .padding(.top, UIApplication.shared.windows.first?.safeAreaInsets.top ?? 44)
+                    .background(BlurView(style: .dark).ignoresSafeArea(edges: .top))
                 }
-                .background(BlurView(style: .dark).ignoresSafeArea(edges: .top))
-            }
-            .navigationBarHidden(true)
-            .onAppear {
-                viewModel.fetchHome()
+                .navigationBarHidden(true)
+                .onAppear {
+                    viewModel.fetchHome()
+                }
             }
         }
+    }
+    
+    private var safeAreaTop: CGFloat {
+        SafeArea.top
     }
 }
 
